@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1" />
+    <title>arbit-dither</title>
+    <meta name="description" content="A tool for dither images" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@fontsource/unifont@5.1.0/index.min.css" />
+
+    <link rel="preload" as="script" href="scripts/init.js" />
+    <link rel="preload" as="script" href="scripts/resources/varErrDiffsRsrc.base.js" />
+    <link rel="preload" as="script" href="scripts/resources/varErrDiffsRsrc.ostromoukhov.js" />
+    <link rel="preload" as="script" href="scripts/resources/varErrDiffsRsrc.zhouFang.js" />
+    <link rel="preload" as="script" href="scripts/lib/901D3/binUtils.js" />
+    <link rel="preload" as="script" href="scripts/locale.js" />
+    <link rel="preload" as="script" href="scripts/generator.js" />
+    <link rel="preload" as="script" href="scripts/sizing.js" />
+    <link rel="preload" as="script" href="scripts/dither.js" />
+    <link rel="preload" as="script" href="scripts/misc.js" />
+    <link rel="preload" as="script" href="scripts/process.js" />
+  </head>
+  <body class="display-flex top-bottom-flow" style="gap: 8px">
+    <div class="bigContainer top-bottom-flow" style="gap: 20px">
+      <div class="previewContainer">
+        <div class="mainCanvas">
+          <canvas id="canvas" width="480" height="270" data-text="$elN_A"></canvas>
+        </div>
+        <button onclick="processFrame()" data-text="$dither"></button>
+      </div>
+      <div class="display-flex top-bottom-flow" style="gap: 10px">
+        <div class="settings_container" style="width: 800px">
+          <div class="settings_label-select">
+            <span>Image style</span>
+            <select id="imagePresets">
+              <option value="threshold">Threshold</option>
+            </select>
+          </div>
+          <div class="display-flex top-bottom-flow" style="gap: 5px">
+            <div class="display-flex left-right-flow" style="gap: 5px">
+              <input id="thresholdInput" type="number" value="0" />
+              <button id="thresholdInputIncrement" class="sqrButton">^</button>
+              <button id="thresholdInputDecrement" class="sqrButton">v</button>
+            </div>
+
+            <input id="thresholdInputSteps" type="number" value="1" />
+          </div>
+          <div class="settings_label-select">
+            <select id="dither">
+              <option value="none" selected="selected">None</option>
+              <option value="matrixThreshold" data-text="$matrix_thresh"></option>
+              <option value="arithmetic" data-text="$arithmetic"></option>
+              <option value="errDiffs" data-text="$err_diffs"></option>
+              <option value="dotDiffs" data-text="$dot_diffs"></option>
+            </select>
+          </div>
+        </div>
+        <div class="display-flex left-right-flow" style="gap: 15px">
+          <div id="matrixDisp" class="settings_container disabled">
+            <div class="settings_label-select">
+              <span data-text="$matrix_thresh"></span>
+              <select id="matrix">
+                <option value="threshold">Threshold</option>
+                <option value="bayer2">Bayer 2²</option>
+                <option value="bayer4">Bayer 4²</option>
+                <option value="bayer8">Bayer 8²</option>
+                <option value="bayer16">Bayer 16²</option>
+                <option value="bayer32">Bayer 32²</option>
+                <option value="bayer64">Bayer 64²</option>
+                <option value="bayer128">Bayer 128²</option>
+                <option value="bayer256">Bayer 256²</option>
+
+                <option value="cluster">Cluster</option>
+                <option value="fishnet">Fishnet</option>
+                <option value="halftone">Halftone</option>
+
+                <option value="hatchLeft">Hatch Left</option>
+                <option value="hatchRight">Hatch Right</option>
+                <option value="hatchVertical">Hatch Vertical</option>
+                <option value="hatchHorizontal">Hatch Horizontal</option>
+
+                <option value="crossHatchLeft">Cross Hatch Left</option>
+                <option value="crossHatchRight">Cross Hatch Right</option>
+                <option value="crossHatchVertical">Cross Hatch Vertical</option>
+                <option value="crossHatchHorizontal">Cross Hatch Horizontal</option>
+
+                <option value="zigZag4">Zig Zag 4</option>
+                <option value="zigZag8">Zig Zag 8</option>
+                <option value="zigZag16">Zig Zag 16</option>
+
+                <option value="dot4">Dot 4</option>
+                <option value="dot8">Dot 8</option>
+
+                <option value="cool1">cool1</option>
+              </select>
+            </div>
+            <textarea id="matrixInput" placeholder="2D matrix only"></textarea>
+            <input id="divisionInput" type="number" value="2" />
+            <div class="settings_checkbox-label">
+              <input type="checkbox" id="autoDiv" checked="" />
+              <span>Auto</span>
+            </div>
+          </div>
+          <div id="arithmeticDisp" class="settings_container disabled">
+            <div class="settings_label-select">
+              <span data-text="$arithmetic"></span>
+              <select id="arithmetic">
+                <option value="arithmeticAdd" data-text="$arithmetic_add"></option>
+                <option
+                  value="arithmeticAddConvariant"
+                  data-text="$arithmetic_add_conv"></option>
+                <option value="arithmeticXor" data-text="$arithmetic_xor"></option>
+                <option
+                  value="arithmeticXorConvariant"
+                  data-text="$arithmetic_xor_conv"></option>
+                <option value="halftone" data-text="$halftone"></option>
+              </select>
+            </div>
+            <div class="settings_container">
+              <textarea id="arithmeticInput" placeholder="'x', 'y', 'c'"></textarea>
+            </div>
+          </div>
+          <div class="settings_container">
+            <div class="settings_label-select">
+              <span data-text="$err_diffs"></span>
+              <select id="errDiffs" class="disabled">
+                <option value="floydSteinberg">Floyd-Steinberg</option>
+                <option value="falseFloydSteinberg">False Floyd-Steinberg</option>
+                <option value="fan">Fan</option>
+                <option value="shiauFan">Shiau-Fan</option>
+                <option value="shiauFan2">Shiau-Fan 2</option>
+                <option value="atkinson">Atkinson</option>
+                <option value="burkes">Burkes</option>
+                <option value="javisJudiceNinke">Jarvis-Judice-Ninke</option>
+                <option value="stucki">Stucki</option>
+                <option value="sierra">Sierra</option>
+                <option value="sierraLite">Sierra Lite</option>
+                <option value="sierra2">Sierra 2</option>
+                <option value="box">Box</option>
+                <option value="diagonal">Diagonal</option>
+                <option value="pigeon">Steve Pigeon</option>
+                <option value="kist">Robert Kist</option>
+                <option value="arce">Stevenson Arce</option>
+                <option value="xot">Xot(Perf Warning)</option>
+                <option value="twoD">Two-Dim</option>
+                <option value="oneD">One-Dim</option>
+                <option value="knuth">Knuth(Dot diffusion)</option>
+              </select>
+            </div>
+            <div id="errDiffsInputDisp" class="settings_container disabled">
+              <textarea id="errDiffsMatrixInput" placeholder="2D matrix only"></textarea>
+              <input id="errDiffsDivisionInput" type="number" />
+              <div class="settings_checkbox-label">
+                <input type="checkbox" id="errDiffsAutoDiv" checked="" />
+                <span>Auto</span>
+              </div>
+            </div>
+            <div id="serpentineDisp" class="settings_checkbox-label disabled">
+              <input type="checkbox" id="useSerpentine" />
+              <span data-text="$serpentine"></span>
+            </div>
+            <div id="bufferDisp" class="settings_checkbox-label-select disabled">
+              <input type="checkbox" id="useBuffer" />
+              <span data-text="$buffer"></span>
+              <div id="bufferSelectDisp" class="disabled">
+                <select id="buffer">
+                  <option value="Int8Array" selected="" data-text="$Int8Array"></option>
+                  <option value="Int16Array" data-text="$Int16Array"></option>
+                  <option value="Int32Array" data-text="$Int32Array"></option>
+                  <option value="Float16Array" data-text="$Float16Array"></option>
+                  <option value="Float32Array" data-text="$Float32Array"></option>
+                  <option value="Float64Array" data-text="$Float64Array"></option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="settings_container">
+            <div class="whitehr"></div>
+            <div class="settings_container">
+              <div class="settings_label-input">
+                <span>Width</span>
+                <input type="number" id="canvasWidth" placeholder="480" value="480" />
+              </div>
+              <div class="settings_label-input">
+                <span>Height</span>
+                <input type="number" id="canvasHeight" placeholder="480" value="270" />
+              </div>
+              <button onclick="changeCanvasSize()" data-text="$change_canvas_size"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script src="scripts/init.js"></script>
+
+  <!--Resources-->
+  <script src="scripts/resources/varErrDiffsRsrc.base.js"></script>
+  <script src="scripts/resources/varErrDiffsRsrc.ostromoukhov.js"></script>
+  <script src="scripts/resources/varErrDiffsRsrc.zhouFang.js"></script>
+
+  <!--Libraries-->
+  <script src="scripts/lib/901D3/binUtils.js"></script>
+
+  <script src="scripts/locale.js"></script>
+  <script src="scripts/generator.js"></script>
+  <script src="scripts/sizing.js"></script>
+  <script src="scripts/dither.js"></script>
+  <script src="scripts/misc.js"></script>
+  <script src="scripts/process.js"></script>
+</html>
